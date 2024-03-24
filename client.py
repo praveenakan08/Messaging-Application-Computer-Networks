@@ -4,16 +4,16 @@ class Client:
     serverName = '127.0.0.1'
     serverPort = 5000
 
-    clientSocket = socket(AF_INET, SOCK_STREAM)
-    clientSocket.connect((serverName, serverPort))
+    # Whenever a client is created and its connected to the server
+    def _init__(self):
+        self.clientSocket = socket(AF_INET, SOCK_STREAM)
+        self.clientSocket.connect((self.serverName, self.serverPort))
     
-    # assign a temporary port and save thec client data
-    # in a table 
-    sentence = input('Input lowercase sentence:')
-    clientSocket.send(sentence.encode())
-    modifiedSentence = clientSocket.recv(1024)
-
-    print ('From Server:', modifiedSentence.decode())
-
-
-    clientSocket.close()
+    #Function to send a message to client and recieve back the message from server
+    def send_message(self, message):
+        self.clientSocket.send(message.encode())
+        modifiedSentence = self.clientSocket.recv(1024)
+        print('From Server:', modifiedSentence.decode())
+    
+    def close_connection(self):
+        self.clientSocket.close()

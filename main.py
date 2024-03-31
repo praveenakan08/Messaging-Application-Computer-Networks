@@ -1,12 +1,13 @@
 from client import Client
-from server import Server
+import threading
 
+# Create multiple clients with different ports
+client1 = Client(1, 5000)
 
-# here any number of clients between 2 and 255 
-# should be instantiated easily
-client1 = Client()
-client2 = Client()
-server = Server()
+print("Client 1 ", client1.connectionAcknowledgement)
 
-# Check all nodes are done sending data & close connections
+send_message_thread = threading.Thread(target=client1.send_message)
+receive_message_thread = threading.Thread(target=client1.receive_message)
 
+send_message_thread.start()
+receive_message_thread.start()

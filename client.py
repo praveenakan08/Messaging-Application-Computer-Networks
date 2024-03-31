@@ -1,19 +1,26 @@
 from socket import *;
 
 class Client:
-    serverName = '127.0.0.1'
-    serverPort = 5000
+    def __init__(self, client_id):
+        self.client_id = client_id
+        self.serverPort = 5000  # Server port
 
-    # Whenever a client is created and its connected to the server
-    def _init__(self):
+    def start(self):
+        # Connect to server
         self.clientSocket = socket(AF_INET, SOCK_STREAM)
-        self.clientSocket.connect((self.serverName, self.serverPort))
-    
-    #Function to send a message to client and recieve back the message from server
-    def send_message(self, message):
-        self.clientSocket.send(message.encode())
-        modifiedSentence = self.clientSocket.recv(1024)
-        print('From Server:', modifiedSentence.decode())
-    
-    def close_connection(self):
+        self.clientSocket.connect(('localhost', self.serverPort))
+        
+        # Send client ID to server
+        self.clientSocket.send(str(self.client_id).encode())
+        
+        # Send messages to server
+        while True:
+            message = input("Enter message to send to server: ")
+            if message == "exit":
+                break
+            self.clientSocket.send(message.encode())
+        self.clientSocket.close()
+
+    def exit(self):
+        # Close the connection
         self.clientSocket.close()

@@ -7,9 +7,27 @@ class Client:
         self.serverPort = serverPort
         self.clientId = clientId
         self.clientSocket = socket(AF_INET, SOCK_STREAM)
-        self.connected = False #Flag to check if its connected to server
+        self.connected = False # Flag to check if its connected to server
 
-    #Recieve messages from server
+    # Connecting client to server
+    def connect_to_server(self):
+        try:
+            self.clientSocket.connect((self.serverHost, self.serverPort))
+            print(f"Client {self.clientId} connected to server")
+            self.connected = True
+            self.receive_thread = threading.Thread(target=self.receive_messages)
+            self.receive_thread.start()  # Start receiving messages thread
+        except Exception as e:
+            print(f"Error connecting to server: {e}")
+    
+    # Send messages to other clients
+    def send_message(self, message):
+        try:
+            self.clientSocket.sendall(message.encode())
+        except Exception as e:
+            print(f"Error sending message to server: {e}")
+
+    # Recieve messages from server
     def receive_messages(self):
         try:
             while True:
@@ -22,27 +40,7 @@ class Client:
         except Exception as e:
             print(f"Error receiving message from server: {e}")
 
-    #Send message to server
-    def send_message(self, message):
-        try:
-            self.clientSocket.sendall(message.encode())
-        except Exception as e:
-            print(f"Error sending message to server: {e}")
-
-    
-    #Allowing clients to connecting to server
-    def connect_to_server(self):
-        try:
-            self.clientSocket.connect((self.serverHost, self.serverPort))
-            print(f"Client {self.clientId} connected to server")
-            self.connected = True
-            self.receive_thread = threading.Thread(target=self.receive_messages)
-            self.receive_thread.start()  # Start receiving messages thread
-        except Exception as e:
-            print(f"Error connecting to server: {e}")
-
-
-    #Allowing clients to disconnecting from server
+    # Disconnecting client from server
     def disconnect_from_server(self):
         try:
             if self.receive_thread.is_alive():  # Check if the receive thread is alive before joining

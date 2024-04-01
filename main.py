@@ -21,21 +21,20 @@ def main():
     serverHost = 'localhost'#'127.0.0.1'
     serverPort = 5000
 
-    #Start server and its worker threads to accept the connections
+    # Start server and its worker threads to accept the connections
     server = Server(serverHost, serverPort)
     server_thread = threading.Thread(target=server.accept_connections)
     server_thread.start()
 
-    #Take user input on how many clients to instantiate
+    # User input to specify number of clients to be instantiated
     num_clients = int(input("Enter the number of clients to start: "))
     clients = []
     client_threads = []
 
-    #For each client following tasks execute:
-    #1.connect to the server
-    #2.start sending messages to server
-    #3.start recieving messages from peer clients
-    
+    # For each client following tasks are executed:
+    # 1. Connection to server
+    # 2. Sending messages to server
+    # 3. Receiving messages from other clients
     for i in range(num_clients):
         clientId = i + 1
         client = Client(serverHost, serverPort, clientId)
@@ -47,7 +46,7 @@ def main():
     for thread in client_threads:
         thread.join()
 
-    #Upon all the clients disconnection server shutsdown
+    # Server shuts down after all clients are disconnected
     server.serverShutdown()
 
 if __name__ == "__main__":

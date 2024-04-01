@@ -3,42 +3,42 @@ import threading
 from server import Server
 from client import Client
 
-# main.py
-
 def client_task(client):
-    client.connect()
-    receive_thread = threading.Thread(target=client.receive_messages)
-    receive_thread.start()
+    client.connect_to_server()
+    receive_msg_thread = threading.Thread(target=client.receive_messages)
+    receive_msg_thread.start()
 
     while True:
-        message = input(f"Client {client.client_id}: Enter your message (type 'exit' to quit): ")
+        message = input(f"Client {client.client_id}: Enter your message or type 'exit' to disconnect from server\n")
         client.send_message(message)
         if message.lower() == "exit":
-            client.disconnect()
+            client.disconnect_from_server()
             break
 
-    receive_thread.join()  # Wait for the receive thread to finish
-
-
-# main.py
+    receive_msg_thread.join()
 
 def main():
-    server_host = '127.0.0.1'
-    server_port = 12345
+    serverHost = 'localhost'#'127.0.0.1'
+    serverPort = 5000
 
-    # Start the server
-    server = Server(server_host, server_port)
+    #Start server and its worker threads to accept the connections
+    server = Server(serverHost, serverPort)
     server_thread = threading.Thread(target=server.accept_connections)
     server_thread.start()
 
-    # Start multiple clients
+    #Take user input on how many clients to instantiate
     num_clients = int(input("Enter the number of clients to start: "))
     clients = []
     client_threads = []
 
+    #For each client following tasks execute:
+    #1.connect to the server
+    #2.start sending messages to server
+    #3.start recieving messages from peer clients
+    
     for i in range(num_clients):
         client_id = i + 1
-        client = Client(server_host, server_port, client_id)
+        client = Client(serverHost, serverPort, client_id)
         client_thread = threading.Thread(target=client_task, args=(client,))
         clients.append(client)
         client_threads.append(client_thread)
@@ -47,7 +47,8 @@ def main():
     for thread in client_threads:
         thread.join()
 
-    server.shutdown()  # Move server shutdown outside the loop
+    #Upon all the clients disconnection server shutsdown
+    server.shutdown()
 
 if __name__ == "__main__":
     main()

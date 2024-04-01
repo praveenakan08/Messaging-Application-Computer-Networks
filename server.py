@@ -1,5 +1,6 @@
 import socket
 import threading
+import queue
 
 class Server:
     def __init__(self, host, port):
@@ -7,6 +8,8 @@ class Server:
         self.port = port
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.client_sockets = []
+        self.frame_buffer = queue.Queue()  # Global frame buffer to store messages
+        self.lock = threading.Lock()  # Lock to ensure thread-safe access to the frame buffer
 
     def handle_client(self, client_socket):
         try:
@@ -21,15 +24,16 @@ class Server:
                     self.client_sockets.remove(client_socket)
                     client_socket.close()
                     break
-                # Broadcast message to all clients
-                for client in self.client_sockets:
-                    try:
-                        client.sendall(data)
-                    except Exception as e:
-                        print(f"Error broadcasting message to client: {e}")
-                        client.close()
-                        self.client_sockets.remove(client)
-                        break
+                with self.lock:
+                    for client in self.client_sockets:
+                        if client != client_socket:  # Exclude the sender
+                            try:
+                                client.sendall(data)  # Broadcast message to other clients
+                            except Exception as e:
+                                print(f"Error broadcasting message to client: {e}")
+                                client.close()
+                                self.client_sockets.remove(client)
+                                break
         except Exception as e:
             print(f"Error handling client: {e}")
             client_socket.close()
@@ -50,8 +54,6 @@ class Server:
         except Exception as e:
             print(f"Error accepting connection: {e}")
 
-    # server.py
-
     def shutdown(self):
         try:
             self.server_socket.close()
@@ -60,4 +62,3 @@ class Server:
             print("Server shutdown.")
         except Exception as e:
             print(f"Error shutting down server: {e}")
-

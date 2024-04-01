@@ -9,7 +9,7 @@ def client_task(client):
     receive_msg_thread.start()
 
     while True:
-        message = input(f"Client {client.client_id}: Enter your message or type 'exit' to disconnect from server\n")
+        message = input(f"Client {client.clientId}: Enter your message or type 'exit' to disconnect from server\n")
         client.send_message(message)
         if message.lower() == "exit":
             client.disconnect_from_server()
@@ -37,8 +37,8 @@ def main():
     #3.start recieving messages from peer clients
     
     for i in range(num_clients):
-        client_id = i + 1
-        client = Client(serverHost, serverPort, client_id)
+        clientId = i + 1
+        client = Client(serverHost, serverPort, clientId)
         client_thread = threading.Thread(target=client_task, args=(client,))
         clients.append(client)
         client_threads.append(client_thread)
@@ -48,7 +48,7 @@ def main():
         thread.join()
 
     #Upon all the clients disconnection server shutsdown
-    server.shutdown()
+    server.serverShutdown()
 
 if __name__ == "__main__":
     main()

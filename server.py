@@ -1,46 +1,63 @@
-from socket import *
+import socket
 import threading
-import queue
 
 class Server:
-    serverPort = 5000
-    serverSocket = socket(AF_INET, SOCK_STREAM)
-    serverSocket.bind(('', serverPort))
-    serverSocket.listen(1)
-    print ('The server is ready to receive')
+    def __init__(self, host, port):
+        self.host = host
+        self.port = port
+        self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.client_sockets = []
 
-    # Global frame buffer(queue) for storing packets
-    frame_buffer = queue.Queue()
+    def handle_client(self, client_socket):
+        try:
+            while True:
+                data = client_socket.recv(1024)
+                if not data:
+                    break
+                message = data.decode('utf-8')
+                print(f"Received message from client: {message}")  # Print received message
+                if message.strip().lower() == "exit":  # Special message to disconnect
+                    print("Client requested disconnection.")
+                    self.client_sockets.remove(client_socket)
+                    client_socket.close()
+                    break
+                # Broadcast message to all clients
+                for client in self.client_sockets:
+                    try:
+                        client.sendall(data)
+                    except Exception as e:
+                        print(f"Error broadcasting message to client: {e}")
+                        client.close()
+                        self.client_sockets.remove(client)
+                        break
+        except Exception as e:
+            print(f"Error handling client: {e}")
+            client_socket.close()
+            self.client_sockets.remove(client_socket)
 
-    # Creating a map to keep track of connected clients
-    clients_table = {}
+    def accept_connections(self):
+        try:
+            self.server_socket.bind((self.host, self.port))
+            self.server_socket.listen(5)
+            print(f"Server listening on {self.host}:{self.port}")
 
-    def create_thread(self):
-        while true:
-            connectionSocket, addr = serverSocket.accept()
-            client=threading.Thread(target=handle_client,args=(connectionSocket, addr))
-            client.start()
+            while True:
+                client_socket, client_address = self.server_socket.accept()
+                print(f"Accepted connection from client: {client_address}")
+                self.client_sockets.append(client_socket)
+                client_thread = threading.Thread(target=self.handle_client, args=(client_socket,))
+                client_thread.start()
+        except Exception as e:
+            print(f"Error accepting connection: {e}")
 
-    def handle_client(self,connectionSocket,addr):
-        client_port=addr[1]
-        print('Client',addr,'connected')
-        # Keep track of the client ports which are connected 
-        # to the server in a table
-        self.clients_table[client_port] = connectionSocket
-        while True:
-            sentence = connectionSocket.recv(1024).decode()
-            # Store the data into buffer and forward packets
-            # as they are received
-            self.frame_buffer.put((client_port,sentence))
+    # server.py
 
-            #iterating over the buffer and checking for the given client if we have data to send and sending the data to server
-            while not self.frame_buffer.empty():
-                port, sentence = self.frame_buffer.get()
-                for client_port, client_socket in self.clients_table.items():
-                    if client_port != port:
-                        capitalizedSentence = sentence.upper()
-                        client_socket.send(capitalizedSentence.encode())
+    def shutdown(self):
+        try:
+            self.server_socket.close()
+            for client_socket in self.client_sockets:
+                client_socket.close()
+            print("Server shutdown.")
+        except Exception as e:
+            print(f"Error shutting down server: {e}")
 
-        del self.clients_table[client_port]
-        print('Client', addr, 'disconnected')
-        connectionSocket.close()
